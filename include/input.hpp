@@ -11,6 +11,7 @@ namespace opengles_workspace {
 		LEFT,
 		DOWN,
 		RIGHT,
+		UP,
 		SPACE
 	};
 

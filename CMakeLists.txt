@@ -11,6 +11,7 @@ add_library(opengles-workspace_lib STATIC
     src/main_loop.cpp
     src/renderer.cpp
     src/input.cpp
+    src/snake.cpp
     third_party/glad/GL/src/gl.c
     )
 

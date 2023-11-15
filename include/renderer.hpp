@@ -25,6 +25,8 @@ class GLFWRenderer : public PolledObject
 
 		std::shared_ptr<Context> mContext;
 		GLuint program;
+		unsigned int VAO,VBO,IBO;
+
 		GLFWwindow* window() const { return static_cast<GLFWwindow*>(mContext->window()); }
 	};
 }

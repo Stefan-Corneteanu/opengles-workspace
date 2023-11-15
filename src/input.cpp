@@ -68,6 +68,8 @@ namespace opengles_workspace {
 				return Key::RIGHT;
 			case GLFW_KEY_DOWN:
 				return Key::DOWN;
+			case GLFW_KEY_UP:
+				return Key::UP;
 			case GLFW_KEY_SPACE:
 				return Key::SPACE;
 			default:
