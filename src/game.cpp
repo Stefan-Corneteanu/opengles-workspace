@@ -1,4 +1,4 @@
-#include <snake.hpp>
+#include <game.hpp>
 #include <deque>
 #include <cmath>
 
@@ -8,35 +8,96 @@ namespace opengles_workspace{
         return this->x == other.x && this->y == other.y;
     }
 
-    Snake::Snake(float x, float y){
-        this->is_alive = true;
+    bool Pos::operator!=(Pos& other){
+        return this->x != other.x || this->y != other.y;
+    }
+
+    float gen_rand_coord(int coord){ //coord refers to if we talk about x or y coordinate
+
+        float val = rand() % 5 * 0.2f; //value between 0 and 0.8f
+
+        if (coord == 0){ //x coordinate should be between -1.0f and 0.8f;
+            if (rand()%2){ //to make the coordinate on either half of the window
+                val *= -1;
+                val -= 0.2f;
+            }
+        }
+        else{ //y coordinate should be between -0.8f and 1.0f
+            if (rand()%2){
+                val *= -1;
+            }
+            else{
+                val += 0.2f;
+            }
+        }
+        
+        return val;
+    }
+
+    Game::Game(){}
+
+    Game::Game(Pos snake_head_pos, Pos food_pos){
+        this->snake_is_alive = true;
         this->snake_queue = std::deque<Pos>();
-        this->snake_queue.push_front((Pos){x,y});
+        this->snake_queue.push_front(snake_head_pos);
+        if (food_pos!=snake_head_pos){
+            this->food_pos = food_pos;
+        }
+        else{
+            this->setFoodPos(gen_rand_coord(0),gen_rand_coord(1));
+        }
     }
 
-    Snake::~Snake(){}
+    Game::~Game(){}
 
-    Direction Snake::getDir(){
-        return this->dir;
+    Direction Game::getSnakeDir(){
+        return this->snake_dir;
     }
 
-    void Snake::setDir(Direction dir){
-        this->dir = dir;
+    void Game::setSnakeDir(Direction dir){
+        this->snake_dir = dir;
     }
 
-    std::deque<Pos> Snake::getQueue(){
+    Pos Game::getFoodPos(){
+        return this->food_pos;
+    }
+
+    bool Game::setFoodPos(float x, float y){
+        this->food_pos = {x,y};
+        if (this->snakeOccupiesPos(this->food_pos)){ 
+            //we cant overlap food on top of snake, need to find another position. 
+            //Solution: linear search on the undeclared matrix of upper left corner positions of the screen
+            int size = round(2.0f/step); //undeclared matrix of upper left corner positions of the screen is of size x size
+            for (int i = 0; i < size; i++){
+                for (int j = 0; j < size; j++){
+                    this->food_pos = {-1.0f+i*step,-1.0f+j*step};
+                    if (!this->snakeOccupiesPos(this->food_pos)){
+                        return true; //found position
+                    }
+                }
+            }
+        }
+        else{
+            return true; //original position was good
+        }
+        return false; //should never reach here
+    }
+
+    std::deque<Pos> Game::getSnakeQueue(){
         return this->snake_queue;
     }
 
-    bool Snake::isAlive(){
-        return this->is_alive;
+    bool Game::isSnakeAlive(){
+        return this->snake_is_alive;
     }
 
-    void Snake::eat(){
-        this->has_eaten = true;
+    void Game::snakeEat(){
+        this->snake_has_eaten = true;
+        //reposition the food;
+        this->setFoodPos(gen_rand_coord(0),gen_rand_coord(1));
     }
 
-    bool Snake::occupiesPos(Pos p){
+    bool Game::snakeOccupiesPos(Pos p){
         //the need to iterate through the queue is the reason why it is a deque
         for (Pos piece: this->snake_queue){
             if (piece == p){
@@ -46,14 +107,14 @@ namespace opengles_workspace{
         return false;
     }
 
-    void Snake::move(){
+    void Game::snakeMove(){
 
         //add new head in queue
         Pos head = this->snake_queue.front();
         Pos new_head; //to be added
 
         //figure out the coordinates of new head based on the direction and proximity to window border
-        switch (this->dir){
+        switch (this->snake_dir){
 
         case UP:{
             float new_y;
@@ -110,25 +171,28 @@ namespace opengles_workspace{
         }
 
         //delete queue if snake hasnt eaten
-        if (!this->has_eaten){
+        if (!this->snake_has_eaten){
             this->snake_queue.pop_back();
         }
         else{
-            this->has_eaten = false;
+            this->snake_has_eaten = false;
         }
 
         //check for collision with
         //1 snake body
-        if(this->occupiesPos(new_head)){
-            this->is_alive = false;
-            this->dir = NONE;
+        if(this->snakeOccupiesPos(new_head)){
+            this->snake_is_alive = false;
+            this->snake_dir = NONE;
             return;
         }
 
         //2 food
-        //to be redone
+        if (new_head == food_pos){
+            this->snakeEat();
+        }
 
         //if we got till here, add new head in tail
         this->snake_queue.push_front(new_head);
     }
+    
 }
