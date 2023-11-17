@@ -1,0 +1,9 @@
+#version 300 es
+layout(location = 0) in vec4 vPosition;
+layout(location = 2) in vec2 vTextureCoord;
+out vec2 fTextureCoord;
+void main()
+{
+    gl_Position = vPosition;
+    fTextureCoord = vTextureCoord;
+}

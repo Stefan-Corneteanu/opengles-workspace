@@ -1,8 +1,10 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <deque>
 #include <context.hpp>
 #include <polled_object.hpp>
+#include <common.hpp>
 
 
 #include <glad/gl.h>
@@ -18,7 +20,7 @@ class GLFWRenderer : public PolledObject
 
 		~GLFWRenderer() = default;
 
-		void render();
+		void render(std::deque<Pos>,Pos);
 
 		bool poll() override;
 	private:

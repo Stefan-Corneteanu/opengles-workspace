@@ -6,6 +6,9 @@
 #include <cassert>
 #include <array>
 #include <iostream>
+#include <string>
+#include <fstream>
+
 
 #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
@@ -16,6 +19,16 @@
 
 namespace opengles_workspace
 {
+	const char* ReadShaderFile(const char* filepath){
+
+		std::string line,src_code;
+		std::ifstream ShaderFile(filepath);
+
+		while ( getline(ShaderFile,line)){
+			src_code += line + "\n";
+		}
+		return src_code.c_str();
+	}
 	GLFWRenderer::GLFWRenderer(std::shared_ptr<Context> context)
 		: mContext(std::move(context))
 	{
@@ -48,6 +61,8 @@ namespace opengles_workspace
 		//compile shaders
 
 		//vertex shader
+
+		fprintf(stdout,"%s\n",ReadShaderFile("vertexshader.vertexshader"));
 		const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertex_shader,1,&vShaderStr,NULL);
 		glCompileShader(vertex_shader);
@@ -122,7 +137,7 @@ namespace opengles_workspace
 		
 	}
 
-	void GLFWRenderer::render() {
+	void GLFWRenderer::render(std::deque<Pos> snake_queue, Pos food_pos) {
 		// GL code begin
 		
 		// GL code goes here
@@ -171,8 +186,13 @@ namespace opengles_workspace
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*noPrimitives*noIndicesPerPrimitive, indices, GL_STATIC_DRAW);
 
+		//draw square
+		
+		//positions
 		glVertexAttribPointer(0, noPosValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)0);
 		glEnableVertexAttribArray(0);
+
+		//texture
 		glVertexAttribPointer(2, noTexValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)(sizeof(float) * offsetTex));
 		glEnableVertexAttribArray(2);
 

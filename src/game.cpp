@@ -1,16 +1,9 @@
 #include <game.hpp>
 #include <deque>
 #include <cmath>
+#include <stdio.h>
 
 namespace opengles_workspace{
-
-    bool Pos::operator==(Pos& other){
-        return this->x == other.x && this->y == other.y;
-    }
-
-    bool Pos::operator!=(Pos& other){
-        return this->x != other.x || this->y != other.y;
-    }
 
     float gen_rand_coord(int coord){ //coord refers to if we talk about x or y coordinate
 
@@ -34,18 +27,19 @@ namespace opengles_workspace{
         return val;
     }
 
-    Game::Game(){}
+    Game::Game(Pos snake_head_pos, Direction snake_dir, Pos food_pos, std::shared_ptr<GLFWRenderer> renderer){
 
-    Game::Game(Pos snake_head_pos, Pos food_pos){
-        this->snake_is_alive = true;
         this->snake_queue = std::deque<Pos>();
         this->snake_queue.push_front(snake_head_pos);
+        this->snake_dir = snake_dir; //give snake random direction
         if (food_pos!=snake_head_pos){
             this->food_pos = food_pos;
         }
         else{
             this->setFoodPos(gen_rand_coord(0),gen_rand_coord(1));
         }
+
+        this->renderer = renderer;
     }
 
     Game::~Game(){}
@@ -195,4 +189,9 @@ namespace opengles_workspace{
         this->snake_queue.push_front(new_head);
     }
     
+
+    bool Game::poll(){
+        this->snakeMove();
+        return snake_is_alive;
+    }
 }

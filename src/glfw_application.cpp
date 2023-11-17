@@ -57,44 +57,46 @@ int GlfwApplication::run() {
 	gladLoadGL(glfwGetProcAddress);
 	glfwSwapInterval(1);
 
-	Game game({gen_rand_coord(0),gen_rand_coord(1)},{gen_rand_coord(0),gen_rand_coord(1)}); //Set snake and food at random positions
-	game.setSnakeDir((Direction)(rand()%4)); //give snake random direction
+	
 
 	MainLoop loop;
 	auto ctx = std::make_shared<Context>(pWindow.get());
 	std::shared_ptr<Input> pInput(Input::create(ctx));
 	std::shared_ptr<GLFWRenderer> pRenderer = std::make_shared<GLFWRenderer>(ctx);
+	std::shared_ptr<Game> game = std::make_shared<Game>((Pos){gen_rand_coord(0),gen_rand_coord(1)}, (Direction)(rand()%4),
+	(Pos){gen_rand_coord(0),gen_rand_coord(1)},pRenderer);
 	pInput->registerKeyCallback([&](Key key, KeyMode keyMode) {
 			if (key == Key::ESCAPE && keyMode == KeyMode::PRESS) {
 				glfwSetWindowShouldClose(pWindow.get(), GLFW_TRUE);
 				return false;
 			}
-			if (key == Key::UP && keyMode == KeyMode::RELEASE && game.isSnakeAlive() && //on key release, only if snake is alive
-				(game.getSnakeQueue().size() == 1 || game.getSnakeDir() != DOWN)){ //and either snake has only one chunk or its not goin the opposite way
+			if (key == Key::UP && keyMode == KeyMode::RELEASE && game->isSnakeAlive() && //on key release, only if snake is alive
+				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != DOWN)){ //and either snake has only one chunk or its not goin the opposite way
 				//snake should go up
-				game.setSnakeDir(UP);
+				game->setSnakeDir(UP);
 			}
-			if (key == Key::DOWN && keyMode == KeyMode::RELEASE  && game.isSnakeAlive() && //on key release, only if snake is alive
-				(game.getSnakeQueue().size() == 1 || game.getSnakeDir() != UP)){ //and either snake has only one chunk or its not goin the opposite way
+			if (key == Key::DOWN && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
+				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != UP)){ //and either snake has only one chunk or its not goin the opposite way
 				//snake should go down
-				game.setSnakeDir(DOWN);
+				game->setSnakeDir(DOWN);
 			}
-			if (key == Key::LEFT && keyMode == KeyMode::RELEASE  && game.isSnakeAlive() && //on key release, only if snake is alive
-				(game.getSnakeQueue().size() == 1 || game.getSnakeDir() != RIGHT)){ //and either snake has only one chunk or its not goin the opposite way
+			if (key == Key::LEFT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
+				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != RIGHT)){ //and either snake has only one chunk or its not goin the opposite way
 				//snake should go left
-				game.setSnakeDir(LEFT);
+				game->setSnakeDir(LEFT);
 			}
-			if (key == Key::RIGHT && keyMode == KeyMode::RELEASE  && game.isSnakeAlive() && //on key release, only if snake is alive
-				(game.getSnakeQueue().size() == 1 || game.getSnakeDir() != LEFT)){ //and either snake has only one chunk or its not goin the opposite way
+			if (key == Key::RIGHT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
+				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != LEFT)){ //and either snake has only one chunk or its not goin the opposite way
 				//snake should go right
-				game.setSnakeDir(RIGHT);
+				game->setSnakeDir(RIGHT);
 			}
 			return true;
 		});
 
 	loop.addPolledObject(pInput);
 	loop.addPolledObject(pRenderer);
-	pRenderer->render();
+	loop.addPolledObject(game);
+	pRenderer->render(game->getSnakeQueue(),game->getFoodPos());
 
 	/* didnt work, couldnt convert the lambda to an acceptable function
 	glfwSetFramebufferSizeCallback(pWindow.get(),(GLFWframebuffersizefun)[&](GLFWwindow* window, int new_width, int new_heigth){

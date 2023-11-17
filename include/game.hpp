@@ -1,28 +1,16 @@
 #pragma once
 
 #include <deque>
+#include <polled_object.hpp>
+#include <renderer.hpp>
+#include <common.hpp>
 
 namespace opengles_workspace{
 
-    struct Pos{
-        float x,y; //normalized position of each body chunk's (+ food's) upper left corner (between -1.0f and 1.0f)
-        bool operator==(Pos&);
-        bool operator!=(Pos&);
-    };
-
-    const float step = 0.2f; //space of snake movements and pieces rendering
-
-    enum Direction{
-        UP,DOWN,LEFT,RIGHT,NONE //enum for direction in which snake heads
-    };
-
-    float gen_rand_coord(int);
-
-    class Game{
+    class Game: public PolledObject{
 
         public:
-            Game();
-            Game(Pos, Pos);
+            Game(Pos, Direction, Pos, std::shared_ptr<GLFWRenderer>);
             ~Game();
 
             Direction getSnakeDir();
@@ -30,7 +18,6 @@ namespace opengles_workspace{
 
             Pos getFoodPos();
             bool setFoodPos(float, float);
-
 
             std::deque<Pos> getSnakeQueue();
             bool isSnakeAlive();
@@ -41,11 +28,14 @@ namespace opengles_workspace{
 
             void snakeMove();
 
+            bool poll() override;
+
         private:
             Direction snake_dir;
             std::deque<Pos>snake_queue;
             bool snake_has_eaten;
-            bool snake_is_alive;
+            bool snake_is_alive = true;
             Pos food_pos;
+            std::shared_ptr<GLFWRenderer> renderer = nullptr;
     };
 }

@@ -12,6 +12,7 @@ add_library(opengles-workspace_lib STATIC
     src/renderer.cpp
     src/input.cpp
     src/game.cpp
+    src/common.cpp
     third_party/glad/GL/src/gl.c
     )
 
