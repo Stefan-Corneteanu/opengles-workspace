@@ -191,7 +191,16 @@ namespace opengles_workspace{
     
 
     bool Game::poll(){
-        this->snakeMove();
-        return snake_is_alive;
+
+        //TO DO: MOVE ALL THE TIMING RELATED STUFF TO RENDERER
+        std::chrono::high_resolution_clock::time_point crt = std::chrono::high_resolution_clock::now(); //current point in time
+
+        if (crt - frame_start >= frame_dur){ //current time minus frame start greater than frame duration? make a move
+            this->renderer->render(snake_queue,food_pos);
+            frame_start = crt;
+            this->snakeMove();
+        }
+        
+        return this->snake_is_alive;
     }
 }

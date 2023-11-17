@@ -12,9 +12,5 @@ namespace opengles_workspace{
 
     const float step = 0.2f; //space of snake movements and pieces rendering
 
-    enum Direction{
-        UP,DOWN,LEFT,RIGHT,NONE //enum for direction in which snake heads
-    };
-
-    float gen_rand_coord(int);
+    
 }

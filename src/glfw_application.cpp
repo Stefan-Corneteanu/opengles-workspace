@@ -57,8 +57,6 @@ int GlfwApplication::run() {
 	gladLoadGL(glfwGetProcAddress);
 	glfwSwapInterval(1);
 
-	
-
 	MainLoop loop;
 	auto ctx = std::make_shared<Context>(pWindow.get());
 	std::shared_ptr<Input> pInput(Input::create(ctx));

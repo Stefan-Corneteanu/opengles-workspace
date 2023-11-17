@@ -26,3 +26,6 @@ add_executable(opengles-workspace
 )
 
 target_link_libraries(opengles-workspace opengles-workspace_lib glfw ${GLFW_LIBRARIES})
+
+configure_file(${CMAKE_SOURCE_DIR}/src/vertexshader.vertexshader ${CMAKE_BINARY_DIR}/vertexshader.vertexshader COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/src/fragmentshader.fragmentshader ${CMAKE_BINARY_DIR}/fragmentshader.fragmentshader COPYONLY)

@@ -19,121 +19,110 @@
 
 namespace opengles_workspace
 {
-	const char* ReadShaderFile(const char* filepath){
+	std::string GLFWRenderer::ReadShaderFile(const char* filepath){
 
 		std::string line,src_code;
 		std::ifstream ShaderFile(filepath);
 
-		while ( getline(ShaderFile,line)){
+		while ( getline(ShaderFile,line)){ //read line by line
 			src_code += line + "\n";
 		}
-		return src_code.c_str();
+
+		ShaderFile.close(); //close file and return
+		return src_code;
 	}
+
+	GLuint GLFWRenderer::LoadShader(const char* filepath, GLenum type){
+
+		std::string shaderTemp = ReadShaderFile(filepath); //read shader from file
+		const char* shaderStr = shaderTemp.c_str(); //const char required, didn't return directly one from
+		//readshaderfile cuz it gave back gibberish
+		GLuint shader = glCreateShader(type); //vertex or fragment shader
+		glShaderSource(shader,1,&shaderStr,NULL); //send shader code to shader
+		glCompileShader(shader);
+		return shader;
+	}
+
+	void GLFWRenderer::setupProgram(GLuint vertex_shader, GLuint fragment_shader){
+
+		program = glCreateProgram(); //init program
+
+		//attach shaders
+		glAttachShader(program,vertex_shader);
+		glAttachShader(program,fragment_shader);
+
+		//link shaders to program and use it
+		glLinkProgram(program);
+		glUseProgram(program);
+	}
+
+	void GLFWRenderer::setupTexture(unsigned int &texture, const char* filepath){
+
+		//bind texture
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//set texture bounding and filtering options on currently bound texture
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_set_flip_vertically_on_load(true); //necessary else texture is flipped vertically
+
+		//load texture image
+		int width, height, noChannels;
+		unsigned char* data = stbi_load(filepath,&width,&height,&noChannels,0);
+
+		if(data){
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else{
+			std::cout<<"Failed to load texture\n";
+		}
+
+		stbi_image_free(data); //free image data
+		
+	}
+
+	void GLFWRenderer::draw(unsigned int texture){
+
+		//bind texture for drawing
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//positions
+		glVertexAttribPointer(0, noPosValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)0);
+		glEnableVertexAttribArray(0);
+
+		//texture
+		glVertexAttribPointer(2, noTexValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)(sizeof(float) * offsetTex));
+		glEnableVertexAttribArray(2);
+
+		glDrawElements(GL_TRIANGLES, noPrimitives*noIndicesPerPrimitive, GL_UNSIGNED_INT, 0);
+	}
+
 	GLFWRenderer::GLFWRenderer(std::shared_ptr<Context> context)
 		: mContext(std::move(context))
 	{
 		//shader codes
-
-		//vertex shader
-		const char* vShaderStr =
-		"#version 300 es \n"
-		"layout(location = 0) in vec4 vPosition; \n"
-		"layout(location = 2) in vec2 vTextureCoord; \n"
-		"out vec2 fTextureCoord; \n"
-		"void main() \n"
-		"{ \n"
-		" gl_Position = vPosition; \n"
-		" fTextureCoord = vTextureCoord; \n"
-		"} \n";
-
-		//fragment shader
-		const char* fShaderStr =
-		"#version 300 es \n"
-		"precision mediump float; \n"
-		"in vec2 fTextureCoord; \n"
-		"uniform sampler2D mySampler; \n"
-		"out vec4 fragColor; \n"
-		"void main() \n"
-		"{ \n"
-		" fragColor = texture(mySampler, fTextureCoord); \n"
-		"} \n";
-
 		//compile shaders
 
 		//vertex shader
-
-		fprintf(stdout,"%s\n",ReadShaderFile("vertexshader.vertexshader"));
-		const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertex_shader,1,&vShaderStr,NULL);
-		glCompileShader(vertex_shader);
-
+		const GLuint vertex_shader = LoadShader("vertexshader.vertexshader",GL_VERTEX_SHADER);
 
 		//fragment shader
-		const GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragment_shader,1,&fShaderStr,NULL);
-		glCompileShader(fragment_shader);
+		const GLuint fragment_shader = LoadShader("fragmentshader.fragmentshader",GL_FRAGMENT_SHADER);
 
 		//link shaders to program
-		program = glCreateProgram();
-		glAttachShader(program,vertex_shader);
-		glAttachShader(program,fragment_shader);
-		glLinkProgram(program);
-		glUseProgram(program);
+		setupProgram(vertex_shader,fragment_shader);
 
 		//generate texture
-		unsigned int textures[2]; //just food and snake body
-		glGenTextures(2, textures);
+		glGenTextures(1, &food_texture);
+		setupTexture(food_texture, "../include/assets/food.png");
 
-		//food texture
-		glActiveTexture(GL_TEXTURE0); //first texture
-		glBindTexture(GL_TEXTURE_2D, textures[0]);
-
-		//set texture bounding and filtering options on currently bound texture
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_set_flip_vertically_on_load(true); //necessary else texture is flipped vertically
-		//load texture image
-		int width, height, noChannels;
-		unsigned char* food_data = stbi_load("../include/assets/food.png",&width,&height,&noChannels,0);
-
-		if(food_data){
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, food_data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else{
-			std::cout<<"Failed to load texture\n";
-		}
-
-		stbi_image_free(food_data); //free image data
-
-		
-		//snake body texture
-		glActiveTexture(GL_TEXTURE1); //second texture
-		glBindTexture(GL_TEXTURE_2D, textures[1]);
-
-		//set texture bounding and filtering options on currently bound texture
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_set_flip_vertically_on_load(true); //necessary else texture is flipped vertically
-		//load texture image
-		unsigned char* snake_body_data = stbi_load("../include/assets/snake_body.png",&width,&height,&noChannels,0);
-
-		if(snake_body_data){
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, snake_body_data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else{
-			std::cout<<"Failed to load texture\n";
-		}
-
-		stbi_image_free(snake_body_data); //free image data
-
+		glGenTextures(1, &snake_body_texture);
+		setupTexture(snake_body_texture, "../include/assets/snake_body.png");
 		
 	}
 
@@ -161,17 +150,6 @@ namespace opengles_workspace
 			1,2,3,
 		};
 
-		//constants
-		const int stride = 5;
-		const int noVertices = 4;
-		const int noValsPerVertex = 5;
-		const int noPosValsPerVertex = 3;
-		const int noTexValsPerVertex = 2;
-		const int offsetTex = 3;
-		const int noPrimitives = 2;
-		const int noIndicesPerPrimitive = 3;
-		
-
 		//Create VAO
 		glGenVertexArrays(1,&VAO);
 		glBindVertexArray(VAO);
@@ -186,17 +164,20 @@ namespace opengles_workspace
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*noPrimitives*noIndicesPerPrimitive, indices, GL_STATIC_DRAW);
 
+		//get translation delta uniform
+		int delta_location = glGetUniformLocation(program,"delta");
+
+		//food position
+		glUniform2f(delta_location,food_pos.x,food_pos.y);
+
 		//draw square
-		
-		//positions
-		glVertexAttribPointer(0, noPosValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)0);
-		glEnableVertexAttribArray(0);
+		draw(food_texture);
 
-		//texture
-		glVertexAttribPointer(2, noTexValsPerVertex, GL_FLOAT, GL_FALSE, stride*sizeof(GLfloat), (void*)(sizeof(float) * offsetTex));
-		glEnableVertexAttribArray(2);
-
-		glDrawElements(GL_TRIANGLES, noPrimitives*noIndicesPerPrimitive, GL_UNSIGNED_INT, 0);
+		//queue position
+		for(Pos snake_body: snake_queue){
+			glUniform2f(delta_location,snake_body.x,snake_body.y);
+			draw(snake_body_texture);
+		}
 
 		// GL code end
 		glfwSwapBuffers(window());
