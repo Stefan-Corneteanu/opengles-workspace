@@ -1,70 +1,92 @@
 #include <game.hpp>
-#include <deque>
+
 #include <cmath>
+#include <deque>
 #include <stdio.h>
 
 namespace opengles_workspace{
 
-    float gen_rand_coord(int coord){ //coord refers to if we talk about x or y coordinate
+    /**
+     * genRandCoord: function to generate a random coordinate (X or Y) in the acceptable interval
+     * @param coord: a Coordinate type (X or Y)
+     * for X coordinate, the interval of values is [-1.0f, 1.0f - STEP]
+     * for Y coordinate, the interval of values is [-1.0f + STEP, 1.0f]
+     * both values are multiples of STEP
+     * @return: the randomly generated coordinate value for X or for Y
+    */
+    float genRandCoord(Coord coord){ //coord refers to if we talk about x or y coordinate
 
-        float val = rand() % 5 * 0.2f; //value between 0 and 0.8f
+        float val = rand() % (int)(1.0f/STEP) * STEP; //value between 0 and 1.0f - step
 
-        if (coord == 0){ //x coordinate should be between -1.0f and 0.8f;
+        if (coord == COORD_X){ //x coordinate should be between -1.0f and 1.0f - step;
             if (rand()%2){ //to make the coordinate on either half of the window
                 val *= -1;
-                val -= 0.2f;
+                val -= STEP;
             }
+
         }
-        else{ //y coordinate should be between -0.8f and 1.0f
+        else{ //y coordinate should be between -1.0f + step and 1.0f
             if (rand()%2){
                 val *= -1;
             }
             else{
-                val += 0.2f;
+                val += STEP;
             }
         }
-        
         return val;
     }
 
-    Game::Game(Pos snake_head_pos, Direction snake_dir, Pos food_pos, std::shared_ptr<GLFWRenderer> renderer){
-
-        this->snake_queue = std::deque<Pos>();
-        this->snake_queue.push_front(snake_head_pos);
-        this->snake_dir = snake_dir; //give snake random direction
-        if (food_pos!=snake_head_pos){
+    Game::Game(Snake snake, Pos food_pos, std::shared_ptr<GLFWRenderer> renderer){
+        
+        this->snake = snake; //initialize snake
+        if (food_pos!=snake.getQueue().front()){ //check that food and snake dont overlap at instantiation
             this->food_pos = food_pos;
         }
         else{
-            this->setFoodPos(gen_rand_coord(0),gen_rand_coord(1));
+            this->setFoodPos(genRandCoord(COORD_X),genRandCoord(COORD_Y));
         }
 
         this->renderer = renderer;
+        renderer->setData(snake,food_pos);
     }
 
     Game::~Game(){}
 
     Direction Game::getSnakeDir(){
-        return this->snake_dir;
+        return this->snake.getDir();
     }
 
     void Game::setSnakeDir(Direction dir){
-        this->snake_dir = dir;
+        this->snake.setDir(dir);
+    }
+
+    Direction Game::getSnakeAwaitingNextDir(){
+        return this->snake.getAwaitingNextDir();
+    }
+    void Game::setSnakeAwaitingNextDir(Direction dir){
+        this->snake.setAwaitingNextDir(dir);
     }
 
     Pos Game::getFoodPos(){
         return this->food_pos;
     }
 
+    /**
+     * setFoodPos: a more complex approach on setting the position of the food in order to avoid setting it on a
+     * position occupied by the snake
+     * @param x: x coordinate of food position
+     * @param y: y coordinate of food position
+     * @return: true if position was found, false otherwise 
+     * (returning false is an unexpected behaviour and should be investigated)
+    */
     bool Game::setFoodPos(float x, float y){
         this->food_pos = {x,y};
         if (this->snakeOccupiesPos(this->food_pos)){ 
             //we cant overlap food on top of snake, need to find another position. 
             //Solution: linear search on the undeclared matrix of upper left corner positions of the screen
-            int size = round(2.0f/step); //undeclared matrix of upper left corner positions of the screen is of size x size
-            for (int i = 0; i < size; i++){
-                for (int j = 0; j < size; j++){
-                    this->food_pos = {-1.0f+i*step,-1.0f+j*step};
+            for (float i = -1.0f; i < 1.0; i += STEP){
+                for (float j = -1.0 + STEP; j <= 1.0; j += STEP){
+                    this->food_pos = {i,j};
                     if (!this->snakeOccupiesPos(this->food_pos)){
                         return true; //found position
                     }
@@ -78,129 +100,87 @@ namespace opengles_workspace{
     }
 
     std::deque<Pos> Game::getSnakeQueue(){
-        return this->snake_queue;
+        return this->snake.getQueue();
     }
 
     bool Game::isSnakeAlive(){
-        return this->snake_is_alive;
+        return this->snake.isAlive();
     }
 
+    /**
+     * snakeEat: a function called whenever the snake collides with the food
+     * the snake's has_eaten field is set to true (SEE Snake::eat IN common.cpp)
+     * and the food's position is reset (SEE setFoodPos)
+    */
     void Game::snakeEat(){
-        this->snake_has_eaten = true;
+        this->snake.eat();
         //reposition the food;
-        this->setFoodPos(gen_rand_coord(0),gen_rand_coord(1));
+        this->setFoodPos(genRandCoord(COORD_X),genRandCoord(COORD_Y));
     }
 
+    /**
+     * snakeOccupiesPos: a function that checks if the snake occupies a particular position (SEE ALSO snake::occupiesPos in common.cpp)
+     * @param p: the position that we want to check if is occupied by snake or not (if it is in its queue)
+     * @return: true if p is in the snake's queue else false
+    */
     bool Game::snakeOccupiesPos(Pos p){
-        //the need to iterate through the queue is the reason why it is a deque
-        for (Pos piece: this->snake_queue){
-            if (piece == p){
-                return true;
-            }
-        }
-        return false;
+        return this->snake.occupiesPos(p);
     }
 
+    /**
+     * snakeMove: a function that determines in the background the movement of the snake
+     * a new head is determined and the tail is popped (SEE ALSO snake::move in common.cpp)
+     * then it checks for occupying the position of the food or of a body piece
+    */
     void Game::snakeMove(){
 
-        //add new head in queue
-        Pos head = this->snake_queue.front();
-        Pos new_head; //to be added
-
-        //figure out the coordinates of new head based on the direction and proximity to window border
-        switch (this->snake_dir){
-
-        case UP:{
-            float new_y;
-            if (head.y + step > 1.0f){ //teleport to lower bound
-                new_y = round((head.y + step - 2.0f)*100)/100.0f; //roundoff error correction
-            }
-            else{ //just move up
-                new_y = round((head.y + step)*100)/100.0f; //roundoff error correction
-            }
-            new_head = {head.x,new_y};
-            break;
-            }
-            
-        case DOWN:{
-            float new_y;
-            if (head.y - step <= -1.0f){ //teleport to upper bound
-                new_y = round((head.y - step + 2.0f)*100)/100.0f; //roundoff error correction
-            }
-            else{ //just move down
-                new_y = round((head.y - step)*100)/100.0f; //roundoff error correction
-            }
-            new_head = {head.x,new_y};
-            break;
-            }
-
-        case LEFT:{
-            float new_x;
-            if (head.x - step < -1.0f){ //teleport to right bound
-                new_x = round((head.x - step + 2.0f)*100)/100.0f; //roundoff error correction
-            }
-            else{ //just move left
-                new_x = round((head.x - step)*100)/100.0f; //roundoff error correction
-            }
-            new_head = {new_x,head.y};
-            break;
-            }
-
-        case RIGHT:{
-            float new_x;
-            if (head.x + step >= 1.0f){ //teleport to right bound
-                new_x = round((head.x + step - 2.0f)*100)/100.0f; //roundoff error correction
-            }
-            else{ //just move left
-                new_x = round((head.x + step)*100)/100.0f; //roundoff error correction
-            }
-            new_head = {new_x,head.y};
-            break;
-            }
-
-        default:{//NONE
-            new_head = head;
-            break;
-            }
-        }
-
-        //delete queue if snake hasnt eaten
-        if (!this->snake_has_eaten){
-            this->snake_queue.pop_back();
-        }
-        else{
-            this->snake_has_eaten = false;
-        }
+        Pos new_head = this->snake.move();
 
         //check for collision with
         //1 snake body
         if(this->snakeOccupiesPos(new_head)){
-            this->snake_is_alive = false;
-            this->snake_dir = NONE;
+            this->snake.die();
             return;
         }
+
+        //if we got till here, add new head in tail
+        this->snake.pushHead(new_head); //first add the new head then check for collision with food
+        //otherwise the food may be repositioned in the same place where it was!
 
         //2 food
         if (new_head == food_pos){
             this->snakeEat();
         }
 
-        //if we got till here, add new head in tail
-        this->snake_queue.push_front(new_head);
+        
     }
     
-
+/**
+ * poll: a function that checks if a movement should occur given the time elapsed from last frame.
+ * It checks if an inputted user movement is valid or not, calls the snake movement, sends the data
+ * to the renderer and asks for it to draw
+ * @return: true if the game should still poll else false
+*/
     bool Game::poll(){
 
-        //TO DO: MOVE ALL THE TIMING RELATED STUFF TO RENDERER
-        std::chrono::high_resolution_clock::time_point crt = std::chrono::high_resolution_clock::now(); //current point in time
+        std::chrono::high_resolution_clock::time_point crt = std::chrono::high_resolution_clock::now();
+			if (crt-frame_start>=frame_dur){
 
-        if (crt - frame_start >= frame_dur){ //current time minus frame start greater than frame duration? make a move
-            this->renderer->render(snake_queue,food_pos);
-            frame_start = crt;
-            this->snakeMove();
-        }
-        
-        return this->snake_is_alive;
+                //set the inputted snake direction iff it is not opposing of the current direction or the snake is of size 1
+                if(!(this->getSnakeDir() == UP && this->getSnakeAwaitingNextDir() == DOWN ||
+                    this->getSnakeDir() == DOWN && this->getSnakeAwaitingNextDir() == UP ||
+                    this->getSnakeDir() == LEFT && this->getSnakeAwaitingNextDir() == RIGHT ||
+                    this->getSnakeDir() == RIGHT && this->getSnakeAwaitingNextDir() == LEFT) ||
+                    this->getSnakeQueue().size() == 1){
+
+                    this->setSnakeDir(this->getSnakeAwaitingNextDir());
+                }
+                this->snakeMove();
+                this->renderer->setData(snake,food_pos);
+				this->renderer->render();
+				frame_start = crt;
+			}
+        bool renderer_poll = this->renderer->poll();    
+        return renderer_poll;
     }
 }

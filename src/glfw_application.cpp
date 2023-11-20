@@ -22,12 +22,6 @@ void error_callback(int error, const char* description) {
 	fprintf(stderr, "GLFW error: %s\n", description);
 }
 
-void window_callback(GLFWwindow* window, int new_width, int new_heigth){
-	glViewport(0,0,new_width,new_heigth);
-	glfwSwapBuffers(window);
-	printf("%d %d\n", new_width, new_heigth);
-}
-
 void destroyGlfwWindow(GLFWwindow* window) {
 	glfwDestroyWindow(window);
 }
@@ -49,7 +43,7 @@ GlfwApplication::~GlfwApplication() {
 }
 
 int GlfwApplication::run() {
-	auto pWindow = std::unique_ptr<GLFWwindow, GLFWwindowDeleter>(glfwCreateWindow(mWidth, mHeight, "OpenGL ES workspace", nullptr, nullptr), destroyGlfwWindow);
+	auto pWindow = std::unique_ptr<GLFWwindow, GLFWwindowDeleter>(glfwCreateWindow(mWidth, mHeight, "Snake", nullptr, nullptr), destroyGlfwWindow);
 	if(!pWindow) {
 		throw Exception("Failed to create GLFW window");
 	}
@@ -61,32 +55,30 @@ int GlfwApplication::run() {
 	auto ctx = std::make_shared<Context>(pWindow.get());
 	std::shared_ptr<Input> pInput(Input::create(ctx));
 	std::shared_ptr<GLFWRenderer> pRenderer = std::make_shared<GLFWRenderer>(ctx);
-	std::shared_ptr<Game> game = std::make_shared<Game>((Pos){gen_rand_coord(0),gen_rand_coord(1)}, (Direction)(rand()%4),
-	(Pos){gen_rand_coord(0),gen_rand_coord(1)},pRenderer);
+
+	Snake snake((Pos){genRandCoord(COORD_X), genRandCoord(COORD_Y)}, (Direction)(rand()%4));
+	std::shared_ptr<Game> game = std::make_shared<Game>(snake,(Pos){genRandCoord(COORD_X), genRandCoord(COORD_Y)}, pRenderer);
+
 	pInput->registerKeyCallback([&](Key key, KeyMode keyMode) {
 			if (key == Key::ESCAPE && keyMode == KeyMode::PRESS) {
 				glfwSetWindowShouldClose(pWindow.get(), GLFW_TRUE);
 				return false;
 			}
-			if (key == Key::UP && keyMode == KeyMode::RELEASE && game->isSnakeAlive() && //on key release, only if snake is alive
-				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != DOWN)){ //and either snake has only one chunk or its not goin the opposite way
+			if (key == Key::UP && keyMode == KeyMode::RELEASE && game->isSnakeAlive()){//on key release, only if snake is alive
 				//snake should go up
-				game->setSnakeDir(UP);
+				game->setSnakeAwaitingNextDir(UP);
 			}
-			if (key == Key::DOWN && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
-				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != UP)){ //and either snake has only one chunk or its not goin the opposite way
-				//snake should go down
-				game->setSnakeDir(DOWN);
+			if (key == Key::DOWN && keyMode == KeyMode::RELEASE  && game->isSnakeAlive()){//on key release, only if snake is alive
+				//snake should await going down
+				game->setSnakeAwaitingNextDir(DOWN);
 			}
-			if (key == Key::LEFT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
-				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != RIGHT)){ //and either snake has only one chunk or its not goin the opposite way
-				//snake should go left
-				game->setSnakeDir(LEFT);
+			if (key == Key::LEFT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive()){//on key release, only if snake is alive
+				//snake should await going left
+				game->setSnakeAwaitingNextDir(LEFT);
 			}
-			if (key == Key::RIGHT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive() && //on key release, only if snake is alive
-				(game->getSnakeQueue().size() == 1 || game->getSnakeDir() != LEFT)){ //and either snake has only one chunk or its not goin the opposite way
-				//snake should go right
-				game->setSnakeDir(RIGHT);
+			if (key == Key::RIGHT && keyMode == KeyMode::RELEASE  && game->isSnakeAlive()){//on key release, only if snake is alive
+				//snake should await going right
+				game->setSnakeAwaitingNextDir(RIGHT);
 			}
 			return true;
 		});
@@ -94,17 +86,7 @@ int GlfwApplication::run() {
 	loop.addPolledObject(pInput);
 	loop.addPolledObject(pRenderer);
 	loop.addPolledObject(game);
-	pRenderer->render(game->getSnakeQueue(),game->getFoodPos());
-
-	/* didnt work, couldnt convert the lambda to an acceptable function
-	glfwSetFramebufferSizeCallback(pWindow.get(),(GLFWframebuffersizefun)[&](GLFWwindow* window, int new_width, int new_heigth){
-		glViewport(0,0,new_width,new_heigth);
-		glfwSwapBuffers(window);
-		pRenderer->render();
-		printf("%d %d\n", new_width, new_heigth);
-	});
-	*/
-
+	pRenderer->render();
 	loop.run();
 	return 0;
 }

@@ -9,20 +9,23 @@
 
 namespace opengles_workspace{
 
-    enum Direction{
-        UP,DOWN,LEFT,RIGHT,NONE //enum for direction in which snake heads
+    enum Coord{
+        COORD_X, COORD_Y
     };
 
-    float gen_rand_coord(int);
+    float genRandCoord(Coord);
 
     class Game: public PolledObject{
 
         public:
-            Game(Pos, Direction, Pos, std::shared_ptr<GLFWRenderer>);
+            Game(Snake, Pos, std::shared_ptr<GLFWRenderer>);
             ~Game();
 
             Direction getSnakeDir();
             void setSnakeDir(Direction);
+
+            Direction getSnakeAwaitingNextDir();
+            void setSnakeAwaitingNextDir(Direction);
 
             Pos getFoodPos();
             bool setFoodPos(float, float);
@@ -39,17 +42,12 @@ namespace opengles_workspace{
             bool poll() override;
 
         private:
-            Direction snake_dir;
-            std::deque<Pos>snake_queue;
-            bool snake_has_eaten;
-            bool snake_is_alive = true;
+            Snake snake;
             Pos food_pos;
             std::shared_ptr<GLFWRenderer> renderer = nullptr;
 
-            //for controlling time in game (TO DO, MOVE THIS TO RENDERER)
-            const int fps = 30;
-            const std::chrono::milliseconds no_millis_in_second = std::chrono::milliseconds(1000);
-            const std::chrono::milliseconds frame_dur = no_millis_in_second / fps;
+            const int no_millis = 1000;
+            const std::chrono::milliseconds frame_dur = std::chrono::milliseconds(1) * no_millis;
             std::chrono::high_resolution_clock::time_point frame_start = std::chrono::high_resolution_clock::now();
     };
 }

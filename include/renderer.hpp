@@ -21,15 +21,17 @@ class GLFWRenderer : public PolledObject
 
 		~GLFWRenderer() = default;
 
-		std::string ReadShaderFile(const char*);
+		std::string readShaderFile(const char*);
 
-		GLuint LoadShader(const char*, GLenum);
+		GLuint loadShader(const char*, GLenum);
 		void setupProgram(GLuint, GLuint);
-		void setupTexture(unsigned int&, const char*);
+		unsigned int setupTexture(const char*);
 
 		void draw(unsigned int);
 
-		void render(std::deque<Pos>,Pos);
+		void setData(Snake, Pos);
+
+		void render();
 
 		bool poll() override;
 	private:
@@ -40,15 +42,18 @@ class GLFWRenderer : public PolledObject
 
 		unsigned int food_texture, snake_body_texture;
 
+		Snake snake;
+		Pos food_pos;
+
 		//constants
-		const int stride = 5;
-		const int offsetTex = 3;
-		const int noVertices = 4;
-		const int noValsPerVertex = 5;
-		const int noPosValsPerVertex = 3;
-		const int noTexValsPerVertex = 2;
-		const int noPrimitives = 2;
-		const int noIndicesPerPrimitive = 3;
+		const int STRIDE = 5;
+		const int OFFSET_TEX = 3;
+		const int NO_VERTICES = 4;
+		const int NO_VALS_PER_VERTEX = 5;
+		const int NO_POS_VALS_PER_VERTEX = 3;
+		const int NO_TEX_VALS_PER_VERTEX = 2;
+		const int NO_PRIMITIVES = 2;
+		const int NO_INDICES_PER_PRIMITIVE = 3;
 
 		GLFWwindow* window() const { return static_cast<GLFWwindow*>(mContext->window()); }
 	};
