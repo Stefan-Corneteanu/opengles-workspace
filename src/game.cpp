@@ -84,8 +84,8 @@ namespace opengles_workspace{
         if (this->snakeOccupiesPos(this->food_pos)){ 
             //we cant overlap food on top of snake, need to find another position. 
             //Solution: linear search on the undeclared matrix of upper left corner positions of the screen
-            for (float i = -1.0f; i < 1.0; i += STEP){
-                for (float j = -1.0 + STEP; j <= 1.0; j += STEP){
+            for (float i = -1.0f; i < 1.0; i = round((i + STEP)*100)/100.0f){
+                for (float j = -1.0 + STEP; j <= 1.0; j = round((j + STEP)*100)/100.0f){
                     this->food_pos = {i,j};
                     if (!this->snakeOccupiesPos(this->food_pos)){
                         return true; //found position
