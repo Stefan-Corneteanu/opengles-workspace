@@ -63,12 +63,16 @@ namespace opengles_workspace {
 			case GLFW_KEY_ESCAPE:
 				return Key::ESCAPE;
 			case GLFW_KEY_LEFT:
+			case GLFW_KEY_A:
 				return Key::LEFT;
 			case GLFW_KEY_RIGHT:
+			case GLFW_KEY_D:
 				return Key::RIGHT;
 			case GLFW_KEY_DOWN:
+			case GLFW_KEY_S:
 				return Key::DOWN;
 			case GLFW_KEY_UP:
+			case GLFW_KEY_W:
 				return Key::UP;
 			case GLFW_KEY_SPACE:
 				return Key::SPACE;
