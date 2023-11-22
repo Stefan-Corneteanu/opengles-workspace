@@ -58,12 +58,13 @@ namespace opengles_workspace
 			std::cout<<"Did not create the shader\n";
 			return 0;
 		}
+
 		glShaderSource(shader,1,&shader_str,NULL); //send shader code to shader
 		glCompileShader(shader);
 		GLint compiled;
 		glGetShaderiv(shader,GL_COMPILE_STATUS,&compiled);
-		if (!compiled)
-		{
+		
+		if (!compiled){
 			GLint infoLen = 0;
 			glGetShaderiv (shader, GL_INFO_LOG_LENGTH, &infoLen);
 			if (infoLen > 1)
@@ -102,20 +103,23 @@ namespace opengles_workspace
 		GLint linked;
 		// Check the link status
 		glGetProgramiv (program, GL_LINK_STATUS, &linked);
+
 		if (!linked){
 			GLint infoLen = 0;
-			glGetProgramiv ( program, GL_INFO_LOG_LENGTH, &infoLen );
-			if ( infoLen > 1 )
-			{
+			glGetProgramiv (program, GL_INFO_LOG_LENGTH, &infoLen);
+
+			if (infoLen > 1){
 				char* infoLog = (char*) malloc (sizeof(char) * infoLen);
 				glGetProgramInfoLog ( program, infoLen, NULL, infoLog);
 				std::cout<<"Error linking program: "<<infoLog<<'\n';
 				free(infoLog);
 			}
 		}
+
 		else{
 			glUseProgram(program);
 		}
+
 	}
 
 	/**

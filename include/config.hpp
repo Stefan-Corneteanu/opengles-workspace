@@ -5,5 +5,5 @@
 namespace opengles_workspace{
     
     const float STEP = 0.2f; //space of snake movements and pieces rendering
-    const int NO_MILLIS = 1000; //timelapse between 2 frames
+    const int NO_MILLIS_PER_FRAME = 1000; //timelapse between 2 frames
 }

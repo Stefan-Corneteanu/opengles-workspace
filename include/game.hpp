@@ -48,7 +48,7 @@ namespace opengles_workspace{
             std::shared_ptr<GLFWRenderer> renderer = nullptr;
 
             
-            const std::chrono::milliseconds FRAME_DUR = std::chrono::milliseconds(NO_MILLIS);
+            const std::chrono::milliseconds FRAME_DUR = std::chrono::milliseconds(NO_MILLIS_PER_FRAME);
             std::chrono::high_resolution_clock::time_point frame_start = std::chrono::high_resolution_clock::now();
     };
 }
