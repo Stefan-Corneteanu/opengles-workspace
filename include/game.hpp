@@ -18,20 +18,21 @@ namespace opengles_workspace{
     class Game: public PolledObject{
 
         public:
+
             Game(Snake, Pos, std::shared_ptr<GLFWRenderer>);
             ~Game();
 
-            Direction getSnakeDir();
+            const Direction getSnakeDir();
             void setSnakeDir(Direction);
 
-            Direction getSnakeAwaitingNextDir();
+            const Direction getSnakeAwaitingNextDir();
             void setSnakeAwaitingNextDir(Direction);
 
-            Pos getFoodPos();
+            const Pos getFoodPos();
             bool setFoodPos(float, float);
 
-            std::deque<Pos> getSnakeQueue();
-            bool isSnakeAlive();
+            const std::deque<Pos> getSnakeQueue();
+            const bool isSnakeAlive();
 
             void snakeEat();
 
@@ -46,8 +47,8 @@ namespace opengles_workspace{
             Pos food_pos;
             std::shared_ptr<GLFWRenderer> renderer = nullptr;
 
-            const int no_millis = 1000;
-            const std::chrono::milliseconds frame_dur = std::chrono::milliseconds(1) * no_millis;
+            
+            const std::chrono::milliseconds FRAME_DUR = std::chrono::milliseconds(NO_MILLIS);
             std::chrono::high_resolution_clock::time_point frame_start = std::chrono::high_resolution_clock::now();
     };
 }

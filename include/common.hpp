@@ -1,5 +1,6 @@
 #pragma once
 #include <deque>
+#include <config.hpp>
 
 //stuff used both by renderer and game logic found here
 
@@ -7,15 +8,15 @@ namespace opengles_workspace{
 
     struct Pos{
         float x,y; //normalized position of each body chunk's (+ food's) upper left corner (between -1.0f and 1.0f)
-        bool operator==(Pos&);
-        bool operator!=(Pos&);
+        bool operator==(const Pos&);
+        bool operator!=(const Pos&);
     };
 
     enum Direction{
         UP,DOWN,LEFT,RIGHT,NONE //enum for direction in which snake heads
     };
 
-    const float STEP = 0.2f; //space of snake movements and pieces rendering
+    
 
     class Snake{
 
@@ -25,25 +26,25 @@ namespace opengles_workspace{
             Snake(Pos,Direction);
             ~Snake();
 
-            Direction getDir();
+            const Direction getDir();
             void setDir(Direction);
 
-            Direction getAwaitingNextDir();
+            const Direction getAwaitingNextDir();
             void setAwaitingNextDir(Direction);
 
-            std::deque<Pos> getQueue();
-            void removeTail();
+            const std::deque<Pos> getQueue();
+
             void pushHead(Pos);
 
-            bool isAlive();
+            const bool isAlive();
             void die();
 
 
             void eat();
-            bool hasEaten();
+            const bool hasEaten();
             void makeHungry();
 
-            bool occupiesPos(Pos);
+            const bool occupiesPos(Pos);
 
             Pos move();
 

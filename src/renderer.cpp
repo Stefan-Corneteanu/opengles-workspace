@@ -27,12 +27,17 @@ namespace opengles_workspace
 
 		std::string line,src_code;
 		std::ifstream shader_file(filepath);
+		if (!shader_file.fail()){
+			while (getline(shader_file,line)){ //read line by line
+				src_code += line + "\n";
+			}
 
-		while (getline(shader_file,line)){ //read line by line
-			src_code += line + "\n";
+			shader_file.close(); //close file and return
 		}
-
-		shader_file.close(); //close file and return
+		else{
+			std::cout<<"Did not read the shader\n";
+		}
+		
 		return src_code;
 	}
 
@@ -48,8 +53,30 @@ namespace opengles_workspace
 		const char* shader_str = shader_temp.c_str(); //const char required, didn't return directly one from
 		//readshaderfile cuz it returned some unclear data
 		GLuint shader = glCreateShader(type); //vertex or fragment shader
+
+		if (shader == 0){
+			std::cout<<"Did not create the shader\n";
+			return 0;
+		}
 		glShaderSource(shader,1,&shader_str,NULL); //send shader code to shader
 		glCompileShader(shader);
+		GLint compiled;
+		glGetShaderiv(shader,GL_COMPILE_STATUS,&compiled);
+		if (!compiled)
+		{
+			GLint infoLen = 0;
+			glGetShaderiv (shader, GL_INFO_LOG_LENGTH, &infoLen);
+			if (infoLen > 1)
+			{
+				char* infoLog = (char*) malloc (sizeof(char) * infoLen );
+				glGetShaderInfoLog( shader, infoLen, NULL, infoLog );
+				std::cout<<"Error compiling shader: "<<infoLog<<'\n';
+				free (infoLog);
+			}
+			glDeleteShader (shader);
+			return 0;
+		}
+
 		return shader;
 	}
 
@@ -61,6 +88,9 @@ namespace opengles_workspace
 	void GLFWRenderer::setupProgram(GLuint vertex_shader, GLuint fragment_shader){
 
 		program = glCreateProgram(); //init program
+		if (program == 0){
+			std::cout<<"Error creating program\n";
+		}
 
 		//attach shaders
 		glAttachShader(program,vertex_shader);
@@ -68,7 +98,24 @@ namespace opengles_workspace
 
 		//link shaders to program and use it
 		glLinkProgram(program);
-		glUseProgram(program);
+
+		GLint linked;
+		// Check the link status
+		glGetProgramiv (program, GL_LINK_STATUS, &linked);
+		if (!linked){
+			GLint infoLen = 0;
+			glGetProgramiv ( program, GL_INFO_LOG_LENGTH, &infoLen );
+			if ( infoLen > 1 )
+			{
+				char* infoLog = (char*) malloc (sizeof(char) * infoLen);
+				glGetProgramInfoLog ( program, infoLen, NULL, infoLog);
+				std::cout<<"Error linking program: "<<infoLog<<'\n';
+				free(infoLog);
+			}
+		}
+		else{
+			glUseProgram(program);
+		}
 	}
 
 	/**

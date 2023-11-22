@@ -19,7 +19,8 @@ add_library(opengles-workspace_lib STATIC
 include_directories(opengles-workspace_lib PUBLIC
     include
     third_party/glad/GL/include
-    third_party/glfw/include)
+    third_party/glfw/include
+    third_party)
 
 add_executable(opengles-workspace 
     main.cpp

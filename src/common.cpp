@@ -1,14 +1,15 @@
 #include <common.hpp>
+
 #include <cmath>
-#include <stdio.h>
+#include <algorithm>
 
 namespace opengles_workspace{
 
-    bool Pos::operator==(Pos& other){
+    bool Pos::operator==(const Pos& other){
         return this->x == other.x && this->y == other.y;
     }
 
-    bool Pos::operator!=(Pos& other){
+    bool Pos::operator!=(const Pos& other){
         return this->x != other.x || this->y != other.y;
     }
 
@@ -22,7 +23,7 @@ namespace opengles_workspace{
 
     Snake::~Snake(){}
 
-    Direction Snake::getDir(){
+    const Direction Snake::getDir(){
         return this->dir;
     }
 
@@ -30,7 +31,7 @@ namespace opengles_workspace{
         this->dir = dir;
     }
 
-    Direction Snake::getAwaitingNextDir(){
+    const Direction Snake::getAwaitingNextDir(){
         return this->awaiting_next_dir;
     }
     
@@ -38,45 +39,32 @@ namespace opengles_workspace{
         this->awaiting_next_dir = dir;
     }
 
-    std::deque<Pos> Snake::getQueue(){
+    const std::deque<Pos> Snake::getQueue(){
         return this->queue;
     }
 
-    /**
-     * pushHead: pushes a new element in snake's queue's head
-     * @param new_head: the new element
-    */
     void Snake::pushHead(Pos new_head){
         this->queue.push_front(new_head);
     }
 
-    bool Snake::isAlive(){
+    const bool Snake::isAlive(){
         return this->is_alive;
     }
 
-    /**
-     * die: a function that modifies snake's is_alive checker, direction of movement and awaiting movement
-    */
     void Snake::die(){
         this->is_alive = false;
         this->dir = NONE;
         this->awaiting_next_dir = NONE;
     }
 
-    /**
-     * eat: sets has_eaten to true
-    */
     void Snake::eat(){
         this->has_eaten = true;
     }
 
-    bool Snake::hasEaten(){
+    const bool Snake::hasEaten(){
         return this->has_eaten;
     }
 
-    /**
-     * makeHungry: sets has_eaten to false
-    */
     void Snake::makeHungry(){
         this->has_eaten = false;
     }
@@ -86,14 +74,8 @@ namespace opengles_workspace{
      * @param p: the position to be looked up in the queue
      * @return: true if it is in the snake's queue else false
     */
-    bool Snake::occupiesPos(Pos p){
-        //the need to iterate through the queue is the reason why it is a deque
-        for (Pos piece: this->queue){
-            if (piece == p){
-                return true;
-            }
-        }
-        return false;
+    const bool Snake::occupiesPos(Pos p){
+        return std::find(queue.begin(),queue.end(),p) != queue.end();
     }
 
     /**

@@ -1,8 +1,8 @@
 #include <game.hpp>
+#include <config.hpp>
 
 #include <cmath>
 #include <deque>
-#include <stdio.h>
 
 namespace opengles_workspace{
 
@@ -52,7 +52,7 @@ namespace opengles_workspace{
 
     Game::~Game(){}
 
-    Direction Game::getSnakeDir(){
+    const Direction Game::getSnakeDir(){
         return this->snake.getDir();
     }
 
@@ -60,14 +60,15 @@ namespace opengles_workspace{
         this->snake.setDir(dir);
     }
 
-    Direction Game::getSnakeAwaitingNextDir(){
+    const Direction Game::getSnakeAwaitingNextDir(){
         return this->snake.getAwaitingNextDir();
     }
+
     void Game::setSnakeAwaitingNextDir(Direction dir){
         this->snake.setAwaitingNextDir(dir);
     }
 
-    Pos Game::getFoodPos(){
+    const Pos Game::getFoodPos(){
         return this->food_pos;
     }
 
@@ -99,11 +100,11 @@ namespace opengles_workspace{
         return false; //should never reach here
     }
 
-    std::deque<Pos> Game::getSnakeQueue(){
+    const std::deque<Pos> Game::getSnakeQueue(){
         return this->snake.getQueue();
     }
 
-    bool Game::isSnakeAlive(){
+    const bool Game::isSnakeAlive(){
         return this->snake.isAlive();
     }
 
@@ -152,7 +153,6 @@ namespace opengles_workspace{
             this->snakeEat();
         }
 
-        
     }
     
 /**
@@ -164,7 +164,7 @@ namespace opengles_workspace{
     bool Game::poll(){
 
         std::chrono::high_resolution_clock::time_point crt = std::chrono::high_resolution_clock::now();
-			if (crt-frame_start>=frame_dur){
+			if (crt-frame_start>=FRAME_DUR && (this->isSnakeAlive() || this->getSnakeQueue().size() > 1)){
 
                 //set the inputted snake direction iff it is not opposing of the current direction or the snake is of size 1
                 if(!(this->getSnakeDir() == UP && this->getSnakeAwaitingNextDir() == DOWN ||
