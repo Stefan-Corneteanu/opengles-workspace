@@ -3,14 +3,13 @@
 #include <optional>
 #include <deque>
 
-#include <context.hpp>
-#include <polled_object.hpp>
-#include <common.hpp>
-
-
 #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#include <context.hpp>
+#include <polled_object.hpp>
+#include <common.hpp>
 
 namespace opengles_workspace
 {

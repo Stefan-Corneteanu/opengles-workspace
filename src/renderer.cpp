@@ -1,6 +1,3 @@
-#include <renderer.hpp>
-#include <exception.hpp>
-
 #include <memory>
 #include <optional>
 #include <cassert>
@@ -15,6 +12,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include <renderer.hpp>
+#include <exception.hpp>
 
 namespace opengles_workspace
 {

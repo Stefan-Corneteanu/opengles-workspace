@@ -1,8 +1,8 @@
-#include <game.hpp>
-#include <config.hpp>
-
 #include <cmath>
 #include <deque>
+
+#include <game.hpp>
+#include <config.hpp>
 
 namespace opengles_workspace{
 

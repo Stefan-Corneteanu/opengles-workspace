@@ -1,7 +1,7 @@
-#include <common.hpp>
-
 #include <cmath>
 #include <algorithm>
+
+#include <common.hpp>
 
 namespace opengles_workspace{
 

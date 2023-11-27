@@ -6,6 +6,7 @@
 #include <polled_object.hpp>
 #include <renderer.hpp>
 #include <common.hpp>
+#include <config.hpp>
 
 namespace opengles_workspace{
 
